@@ -1,9 +1,9 @@
 # A project's findings, hosts and notes as a Word document. The format is docs/PLUGINS.md.
 id: docx-report
 name: DOCX report
-version: 1.0.0
+version: 1.0.1
 castor: ">=0.1"
-publisher: castor
+publisher: emilyastranova
 description: "Write a project's findings, hosts and pinned notes as a Word document (.docx), attached to a card."
 homepage: https://github.com/emilyastranova/castor-plugins/tree/main/plugins/docx-report
 license: MIT

@@ -2,9 +2,9 @@
 # dig tool, a parser, three commands and a playbook, read-only in the library and removed with it.
 id: mail-dns-checks
 name: Mail DNS checks
-version: 1.0.0
+version: 1.0.1
 castor: ">=0.1"
-publisher: castor
+publisher: emilyastranova
 description: Check a domain's mail records (MX, SPF and DMARC) with dig, as commands and a playbook.
 homepage: https://github.com/emilyastranova/castor-plugins/tree/main/plugins/mail-dns-checks
 license: MIT

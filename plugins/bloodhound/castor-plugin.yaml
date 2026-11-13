@@ -1,9 +1,9 @@
 # Bring a SharpHound collection in, and see who can get to Domain Admins. The format is docs/PLUGINS.md.
 id: bloodhound
 name: BloodHound bridge
-version: 1.0.0
+version: 1.0.1
 castor: ">=0.1"
-publisher: castor
+publisher: emilyastranova
 description: "Import a SharpHound collection (BloodHound CE): users, computers and domains as assets, sessions, admin rights and trusts as relationships, and everyone's shortest path to Domain Admins."
 homepage: https://github.com/emilyastranova/castor-plugins/tree/main/plugins/bloodhound
 license: MIT

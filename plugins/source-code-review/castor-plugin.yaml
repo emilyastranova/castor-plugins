@@ -2,9 +2,9 @@
 # connect. The format is docs/PLUGINS.md.
 id: source-code-review
 name: Source Code Review
-version: 1.0.0
+version: 1.0.1
 castor: ">=0.1"
-publisher: castor
+publisher: emilyastranova
 description: "Source files, repositories and symbols as assets, with imports, calls, data flow and tests as relationships. Import a repository archive to map its files and imports, or add them by hand in the Code map."
 homepage: https://github.com/emilyastranova/castor-plugins/tree/main/plugins/source-code-review
 license: MIT

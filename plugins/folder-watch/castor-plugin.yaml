@@ -2,9 +2,9 @@
 # plugin can't. The format is docs/PLUGINS.md.
 id: folder-watch
 name: Watch folder
-version: 1.0.0
+version: 1.0.1
 castor: ">=0.1"
-publisher: castor
+publisher: emilyastranova
 description: "Files dropped in a folder on the Castor server go to their project: each becomes a card with the file attached, and a plugin that imports that kind of file (Nessus, SharpHound…) runs on it."
 homepage: https://github.com/emilyastranova/castor-plugins/tree/main/plugins/folder-watch
 license: MIT

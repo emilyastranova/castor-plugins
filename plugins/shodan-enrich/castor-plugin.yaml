@@ -1,9 +1,9 @@
 # Castor's second plugin: events and network access (plugins phase B). The format is docs/PLUGINS.md.
 id: shodan-enrich
 name: Shodan enrichment
-version: 1.1.0
+version: 1.1.1
 castor: ">=0.1"
-publisher: castor
+publisher: emilyastranova
 description: "Look up public hosts on Shodan as they're found: open ports, web servers, names and known CVEs."
 homepage: https://github.com/emilyastranova/castor-plugins/tree/main/plugins/shodan-enrich
 license: MIT
