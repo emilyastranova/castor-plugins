@@ -3,12 +3,12 @@
   "publishers": [
     {
       "id": "castor",
-      "name": "Castor",
+      "name": "Emily Astranova",
       "github": [
         "emilyastranova"
       ],
       "url": "https://github.com/emilyastranova/castor-plugins",
-      "description": "The official plugins, made alongside Castor."
+      "description": "The official Castor plugins, made alongside Castor."
     }
   ],
   "plugins": [
