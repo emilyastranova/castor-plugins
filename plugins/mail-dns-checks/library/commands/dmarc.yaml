@@ -1,0 +1,18 @@
+id: mail-dmarc-record
+name: DMARC record
+schema_version: 1
+description: The domain's DMARC policy (_dmarc TXT record) and what it asks receivers to do
+tool: dig
+tags: [dns, mail]
+args:
+  - name: domain
+    type: string
+    description: Domain to check
+    required: true
+    example: example.com
+    regex: '^[A-Za-z0-9.-]+$'
+command: |
+  dig +short TXT _dmarc.{{ domain }} | sed 's/" "//g; s/"//g' | grep -i '^v=DMARC1' || echo "no DMARC record"
+outputs:
+  - name: dmarc
+    parser: dig.txt_records

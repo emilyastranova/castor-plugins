@@ -1,0 +1,18 @@
+id: mail-mx-records
+name: Mail servers (MX)
+schema_version: 1
+description: The mail servers a domain names, by preference
+tool: dig
+tags: [dns, mail]
+args:
+  - name: domain
+    type: string
+    description: Domain to check
+    required: true
+    example: example.com
+    regex: '^[A-Za-z0-9.-]+$'
+command: dig +short MX {{ domain }} | sort -n
+outputs:
+  - name: servers
+    type: list<string>
+    parser: lines

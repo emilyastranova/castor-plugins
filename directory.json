@@ -1,0 +1,110 @@
+{
+  "version": 1,
+  "publishers": [
+    {
+      "id": "castor",
+      "name": "Castor",
+      "github": [
+        "emilyastranova"
+      ],
+      "url": "https://github.com/emilyastranova/castor-plugins",
+      "description": "The official plugins, made alongside Castor."
+    }
+  ],
+  "plugins": [
+    {
+      "id": "bloodhound",
+      "name": "BloodHound bridge",
+      "publisher": "castor",
+      "description": "Import a SharpHound collection (BloodHound CE): users, computers and domains as assets, sessions, admin rights and trusts as relationships, and everyone's shortest path to Domain Admins.",
+      "repo": "emilyastranova/castor-plugins",
+      "path": "plugins/bloodhound",
+      "tag_prefix": "bloodhound-v",
+      "tags": [
+        "active-directory",
+        "import",
+        "graph"
+      ]
+    },
+    {
+      "id": "docx-report",
+      "name": "DOCX report",
+      "publisher": "castor",
+      "description": "Write a project's findings, hosts and pinned notes as a Word document (.docx), attached to a card.",
+      "repo": "emilyastranova/castor-plugins",
+      "path": "plugins/docx-report",
+      "tag_prefix": "docx-report-v",
+      "tags": [
+        "report",
+        "export"
+      ]
+    },
+    {
+      "id": "folder-watch",
+      "name": "Watch folder",
+      "publisher": "castor",
+      "description": "Files dropped in a folder on the Castor server go to their project: each becomes a card with the file attached, and a plugin that imports that kind of file (Nessus, SharpHound…) runs on it.",
+      "repo": "emilyastranova/castor-plugins",
+      "path": "plugins/folder-watch",
+      "tag_prefix": "folder-watch-v",
+      "tags": [
+        "import",
+        "automation"
+      ]
+    },
+    {
+      "id": "mail-dns-checks",
+      "name": "Mail DNS checks",
+      "publisher": "castor",
+      "description": "Check a domain's mail records (MX, SPF and DMARC) with dig, as commands and a playbook.",
+      "repo": "emilyastranova/castor-plugins",
+      "path": "plugins/mail-dns-checks",
+      "tag_prefix": "mail-dns-checks-v",
+      "tags": [
+        "dns",
+        "mail",
+        "pack"
+      ]
+    },
+    {
+      "id": "nessus-import",
+      "name": "Nessus import",
+      "publisher": "castor",
+      "description": "Bring a .nessus scan into a project's assets: hosts, services and vulnerabilities, each linked to what it affects.",
+      "repo": "emilyastranova/castor-plugins",
+      "path": "plugins/nessus-import",
+      "tag_prefix": "nessus-import-v",
+      "tags": [
+        "import",
+        "scanner",
+        "vulnerabilities"
+      ]
+    },
+    {
+      "id": "shodan-enrich",
+      "name": "Shodan enrichment",
+      "publisher": "castor",
+      "description": "Look up public hosts on Shodan as they're found: open ports, web servers, names and known CVEs.",
+      "repo": "emilyastranova/castor-plugins",
+      "path": "plugins/shodan-enrich",
+      "tag_prefix": "shodan-enrich-v",
+      "tags": [
+        "enrichment",
+        "osint"
+      ]
+    },
+    {
+      "id": "source-code-review",
+      "name": "Source Code Review",
+      "publisher": "castor",
+      "description": "Source files, repositories and symbols as assets, with imports, calls, data flow and tests as relationships. Import a repository archive to map its files and imports, or add them by hand in the Code map.",
+      "repo": "emilyastranova/castor-plugins",
+      "path": "plugins/source-code-review",
+      "tag_prefix": "source-code-review-v",
+      "tags": [
+        "code-review",
+        "assets"
+      ]
+    }
+  ]
+}

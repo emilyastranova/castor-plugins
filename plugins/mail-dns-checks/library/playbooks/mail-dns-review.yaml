@@ -1,0 +1,24 @@
+id: mail-dns-review
+name: Mail DNS review
+schema_version: 1
+description: A domain's MX, SPF and DMARC records side by side.
+tags: [dns, mail]
+inputs:
+  - name: domain
+    type: string
+    description: Domain to review
+    required: true
+    example: example.com
+steps:
+  - id: mx
+    name: Mail servers
+    command_ref: mail-mx-records
+    args: {domain: "{{ inputs.domain }}"}
+  - id: spf
+    name: SPF
+    command_ref: mail-spf-record
+    args: {domain: "{{ inputs.domain }}"}
+  - id: dmarc
+    name: DMARC
+    command_ref: mail-dmarc-record
+    args: {domain: "{{ inputs.domain }}"}

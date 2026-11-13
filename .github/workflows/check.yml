@@ -1,0 +1,60 @@
+# Every pull request and push: the directory and each plugin, with Castor's own checks.
+name: Check
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  directory:
+    name: Directory and plugins
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: emilyastranova/castor
+          path: .castor
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Install Castor's server (its checks and tests)
+        run: pip install -e ".castor/server[dev]"
+      - name: directory.json and every plugin, as Castor reads them
+        run: python scripts/check_directory.py
+      - name: Each plugin's own tests
+        run: |
+          for f in plugins/*/deno.json; do
+            dir=$(dirname "$f")
+            if grep -q '"test"' "$f"; then (cd "$dir" && echo "::group::$dir" && deno task test && echo "::endgroup::"); fi
+          done
+      - name: The official plugins installed and run in a real Castor
+        env:
+          CASTOR_PLUGINS_REPO: ${{ github.workspace }}
+        run: python -m pytest .castor/server/tests/test_plugins.py .castor/server/tests/test_plugin_directory.py -q
+
+  releases:
+    name: Releases of plugins elsewhere
+    # Plugins in other repositories: their newest release must download, match its SHA-256 and say it's theirs.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: emilyastranova/castor
+          path: .castor
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".castor/server"
+      - name: Newest releases
+        env:
+          CASTOR_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/check_directory.py --releases --only-elsewhere

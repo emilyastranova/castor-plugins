@@ -1,0 +1,18 @@
+id: mail-spf-record
+name: SPF record
+schema_version: 1
+description: The domain's SPF policy (its v=spf1 TXT record); none means anyone may send as it
+tool: dig
+tags: [dns, mail]
+args:
+  - name: domain
+    type: string
+    description: Domain to check
+    required: true
+    example: example.com
+    regex: '^[A-Za-z0-9.-]+$'
+command: |
+  dig +short TXT {{ domain }} | sed 's/" "//g; s/"//g' | grep -i '^v=spf1' || echo "no SPF record"
+outputs:
+  - name: spf
+    parser: dig.txt_records

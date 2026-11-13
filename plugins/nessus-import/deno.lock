@@ -1,0 +1,6 @@
+{
+  "version": "5",
+  "remote": {
+    "https://raw.githubusercontent.com/emilyastranova/castor/main/server/castor_server/plugin_sdk/mod.ts": "fdc79fa529661a921a2bdce2da6eeb758361b88d6fc5bd22e84493b226b83dee"
+  }
+}

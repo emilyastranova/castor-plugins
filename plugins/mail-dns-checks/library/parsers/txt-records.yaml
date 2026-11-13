@@ -1,0 +1,6 @@
+# The TXT records the commands print (already unquoted and joined by their sed), one per line.
+id: dig.txt_records
+name: TXT records
+description: The TXT records dig +short prints, one per line, without their quotes
+type: list<string>
+format: lines
