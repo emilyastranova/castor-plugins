@@ -4,3 +4,6 @@ __pycache__/
 .venv/
 node_modules/
 .castor/
+
+# Deno writes these; the plugins import the SDK from Castor main, which moves, so a lock breaks.
+deno.lock
