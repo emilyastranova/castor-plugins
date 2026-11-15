@@ -9,6 +9,9 @@ Castor's second plugin, and the example of events and network access.
   seen on. A host looked up in the last week (a setting) isn't looked up again.
 - **Look up on Shodan** on a host asset: now, whatever it did before.
 - **Look up every host on Shodan** on the Assets page: one a second, Shodan's limit.
+- **Shodan host lookup** in Castor's Library (1.2.0, Castor 1.4 and later): a library action for
+  cards and playbook steps. Give it a public address; it records what Shodan knows and returns the
+  services, known CVEs (highest CVSS first) and the organisation as the card's results.
 
 **Runs sandboxed**; its only network is `api.shodan.io`. It asks Castor for `projects:read`,
 `assets:read` and `assets:write`, and to be told about `asset.created`. It needs a Shodan API key

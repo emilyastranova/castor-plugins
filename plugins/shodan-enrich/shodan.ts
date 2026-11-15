@@ -118,6 +118,30 @@ export function mapHost(r: ShodanHost): { assets: BulkAsset[]; links: BulkLink[]
 const PRIVATE = [/^10\./, /^127\./, /^169\.254\./, /^192\.168\./, /^172\.(1[6-9]|2\d|3[01])\./, /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./, /^0\./, /^2(2[4-9]|[3-5]\d)\./];
 
 /** An address Shodan could have seen: public IPv4 (not private, loopback, link-local, CGNAT or multicast). */
+/** What a lookup returns to a card or playbook step (the "host" library action): the host, its
+ *  services and its known CVEs, as records for Castor's json-records parser. */
+export function summary(r: ShodanHost) {
+  const vulns = new Map<string, number | null>();
+  for (const b of r.data ?? []) {
+    for (const [cve, v] of Object.entries(b.vulns ?? {})) vulns.set(cve, v.cvss == null ? null : Number(v.cvss));
+  }
+  for (const cve of r.vulns ?? []) if (!vulns.has(cve)) vulns.set(cve, null);
+  return {
+    ip: r.ip_str,
+    org: r.org ?? null,
+    isp: r.isp ?? null,
+    country: r.country_code ?? null,
+    os: r.os ?? null,
+    hostnames: r.hostnames ?? [],
+    last_update: r.last_update ?? null,
+    services: (r.data ?? []).map((b) => ({
+      host: r.ip_str, port: b.port, proto: b.transport ?? "tcp", name: b._shodan?.module ?? null,
+      product: b.product ?? null, version: b.version ?? null, title: b.http?.title ?? null,
+    })),
+    vulns: [...vulns].sort(([, a], [, b]) => (b ?? -1) - (a ?? -1)).map(([cve, cvss]) => ({ cve, cvss })),
+  };
+}
+
 export function isPublicIp(ip: unknown): ip is string {
   return typeof ip === "string" && /^\d{1,3}(\.\d{1,3}){3}$/.test(ip) && !PRIVATE.some((r) => r.test(ip));
 }

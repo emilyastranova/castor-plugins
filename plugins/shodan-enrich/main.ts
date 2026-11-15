@@ -6,7 +6,7 @@
  * Sandboxed; its only network is api.shodan.io.
  */
 import { CastorError, type Context, definePlugin } from "@castor/plugin";
-import { isPublicIp, mapHost, type ShodanHost } from "./shodan.ts";
+import { isPublicIp, mapHost, type ShodanHost, summary } from "./shodan.ts";
 
 const DAY = 24 * 3600 * 1000;
 
@@ -21,12 +21,17 @@ interface Lookup {
 }
 
 async function lookup(ctx: Context, l: Lookup): Promise<string> {
+  return (await lookupHost(ctx, l)).said;
+}
+
+/** Look a host up and record what Shodan knows; the host too, when Shodan had it. */
+async function lookupHost(ctx: Context, l: Lookup): Promise<{ said: string; host: ShodanHost | null }> {
   const key = String(l.settings.api_key ?? "");
   if (!key) throw new CastorError("No Shodan API key: set it in Your plugin settings (or ask an admin to set one for everyone)");
   const seenKey = `seen:${l.ip}`;
   const recheck = Number(l.settings.recheck_days ?? 7) * DAY;
   const seen = await ctx.storage.get<number>(seenKey, { project: l.projectId });
-  if (!l.force && seen && Date.now() - seen < recheck) return `${l.ip}: looked up recently`;
+  if (!l.force && seen && Date.now() - seen < recheck) return { said: `${l.ip}: looked up recently`, host: null };
   const base = String(l.settings.api_url || "https://api.shodan.io").replace(/\/$/, "");
   let r = await fetch(`${base}/shodan/host/${encodeURIComponent(l.ip)}?key=${encodeURIComponent(key)}`);
   if (r.status === 429) { // Shodan's one-a-second limit: wait and try once more
@@ -35,7 +40,7 @@ async function lookup(ctx: Context, l: Lookup): Promise<string> {
   }
   if (r.status === 404) {
     await ctx.storage.set(seenKey, Date.now(), { project: l.projectId });
-    return `${l.ip}: Shodan has nothing on it`;
+    return { said: `${l.ip}: Shodan has nothing on it`, host: null };
   }
   if (r.status === 401 || r.status === 403) throw new CastorError("Shodan refused the API key (check it in the plugin's settings)");
   if (!r.ok) throw new CastorError(`Shodan answered HTTP ${r.status} for ${l.ip}`);
@@ -44,7 +49,7 @@ async function lookup(ctx: Context, l: Lookup): Promise<string> {
   const res = await ctx.assets.bulk(l.projectId, { assets, links, task_id: l.taskId });
   for (const s of res.skipped.slice(0, 5)) ctx.log.warn(`${l.ip}: skipped ${s.ref}: ${s.reason}`);
   await ctx.storage.set(seenKey, Date.now(), { project: l.projectId });
-  return `${l.ip}: ${found.services} service${found.services === 1 ? "" : "s"}, ${found.vulns} known CVE${found.vulns === 1 ? "" : "s"}`;
+  return { said: `${l.ip}: ${found.services} service${found.services === 1 ? "" : "s"}, ${found.vulns} known CVE${found.vulns === 1 ? "" : "s"}`, host };
 }
 
 definePlugin({
@@ -65,6 +70,16 @@ definePlugin({
       const asset = await ctx.api.get<{ fields: Record<string, unknown> }>(`/api/assets/${run.asset!.id}`);
       if (!isPublicIp(asset.fields.ip)) return `${run.asset!.label} has no public address for Shodan to know`;
       return await lookup(ctx, { settings: run.settings, projectId: run.project!.id, ip: asset.fields.ip, force: true });
+    });
+
+    // A library action (Castor 1.4+): from a card or a playbook step, with the host as an argument;
+    // its output (the host, services and CVEs) is read by the definition's parsers.
+    ctx.actions.on("host", async (run) => {
+      const ip = String(run.args.ip ?? "").trim();
+      if (!isPublicIp(ip)) throw new CastorError(`${ip || "That"} isn't a public address for Shodan to know`);
+      run.log.info(`looking ${ip} up on Shodan`);
+      const { said, host } = await lookupHost(ctx, { settings: run.settings, projectId: run.project!.id, ip, taskId: run.task?.id, force: true });
+      return { message: said, output: host ? summary(host) : { ip, services: [], vulns: [], hostnames: [] } };
     });
 
     ctx.actions.on("lookup-all", async (run) => {

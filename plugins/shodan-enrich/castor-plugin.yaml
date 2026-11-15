@@ -1,8 +1,8 @@
 # Castor's second plugin: events and network access (plugins phase B). The format is docs/PLUGINS.md.
 id: shodan-enrich
 name: Shodan enrichment
-version: 1.1.1
-castor: ">=0.1"
+version: 1.2.0
+castor: ">=1.4"
 publisher: emilyastranova
 description: "Look up public hosts on Shodan as they're found: open ports, web servers, names and known CVEs."
 homepage: https://github.com/emilyastranova/castor-plugins/tree/main/plugins/shodan-enrich
@@ -34,6 +34,24 @@ actions:
     icon: travel_explore
     on: [project]
     timeout_minutes: 120
+# A library action (Castor 1.4+): "Shodan host lookup" in the Library, for cards and playbook steps.
+library_actions:
+  - id: host
+    name: Shodan host lookup
+    description: What Shodan knows about one public address, recorded as assets and returned as results.
+    tags: [osint, shodan, recon]
+    args:
+      - name: ip
+        type: string
+        description: A public IPv4 or IPv6 address
+        required: true
+        example: 8.8.8.8
+    outputs:
+      - {name: services, parser: json-records, options: {records: services}}
+      - {name: vulns, parser: json-records, options: {records: vulns}}
+      - {name: org, parser: json-value, options: {path: org}}
+    timeout_minutes: 2
+    rate_limit: 1/second
 settings:
   - name: api_key
     label: Shodan API key
