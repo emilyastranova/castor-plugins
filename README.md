@@ -19,6 +19,7 @@ plugins.
 | [Watch folder](plugins/folder-watch) | Imports scan files dropped into a folder on the server (unrestricted) |
 | [Source Code Review](plugins/source-code-review) | Repositories, files and symbols as assets, with their imports and calls |
 | [Mail DNS checks](plugins/mail-dns-checks) | A pack: MX, SPF and DMARC commands and a playbook, no code |
+| [SaltStack minions](plugins/saltstack) | Salt minions as Castor agents: jobs run through the Salt master's API |
 
 ## Writing a plugin
 

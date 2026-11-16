@@ -1,0 +1,72 @@
+# Castor's first agent type (docs/PLUGINS.md, "Agent types"): Salt minions as Castor agents.
+id: saltstack
+name: SaltStack minions
+version: 1.0.0
+castor: ">=1.12"
+publisher: emilyastranova
+description: "Run Castor's jobs on Salt minions through the Salt master's REST API (salt-api): each minion you add is an agent, tagged from its grains."
+homepage: https://github.com/emilyastranova/castor-plugins/tree/main/plugins/saltstack
+license: MIT
+main: main.ts
+icon: icon.svg
+runtime: sandboxed
+# Nothing in Castor: it only runs the jobs Castor sends its minions.
+permissions: []
+# Its only network: the Salt API you set below (api_url).
+network: []
+agent_types:
+  - name: minion
+    label: Salt minion
+    description: Minions that answer the Salt master (the target below). Jobs run as shell commands through cmd.run_all.
+    icon: grain
+    max_concurrency: 2
+    refresh_minutes: 10
+settings:
+  - name: api_url
+    label: Salt API URL
+    description: "salt-api (rest_cherrypy) on the master, e.g. https://salt.example.com:8000. The plugin may reach this host and no other. It needs a certificate this server trusts."
+    type: text
+    required: true
+    network: true
+    per_user: never
+  - name: username
+    label: Username
+    description: A Salt external-auth user that may run cmd.run_all, grains.items and saltutil.kill_job on the minions.
+    type: text
+    required: true
+    per_user: never
+  - name: password
+    label: Password
+    type: secret
+    required: true
+    per_user: never
+  - name: eauth
+    label: External auth
+    type: select
+    options: [pam, ldap, auto, file, sharedsecret]
+    default: pam
+    per_user: never
+  - name: target
+    label: Minions to offer
+    description: A glob of minion ids (Salt's default targeting), e.g. "web*". Only those answering are listed.
+    type: text
+    default: "*"
+    per_user: never
+  - name: workdir
+    label: Job directory
+    description: Where on a minion each job gets its own directory (CASTOR_WORK).
+    type: text
+    default: /var/tmp/castor
+    per_user: never
+  - name: tag_grains
+    label: Grains as tags
+    description: Comma-separated grains that become each agent's tags (os:Ubuntu, roles:web…).
+    type: text
+    default: os,osmajorrelease,roles,environment,virtual
+    per_user: never
+  - name: install_tools
+    label: Install tools
+    description: When a command's tool isn't on a minion, run the tool's install command there (as the minion's user, usually root). Off, the job fails saying what to install.
+    type: bool
+    default: false
+    per_user: never

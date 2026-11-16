@@ -43,7 +43,7 @@
       "id": "folder-watch",
       "name": "Watch folder",
       "publisher": "emilyastranova",
-      "description": "Files dropped in a folder on the Castor server go to their project: each becomes a card with the file attached, and a plugin that imports that kind of file (Nessus, SharpHound…) runs on it.",
+      "description": "Files dropped in a folder on the Castor server go to their project: each becomes a card with the file attached, and a plugin that imports that kind of file (Nessus, SharpHound\u2026) runs on it.",
       "repo": "emilyastranova/castor-plugins",
       "path": "plugins/folder-watch",
       "tag_prefix": "folder-watch-v",
@@ -78,6 +78,20 @@
         "import",
         "scanner",
         "vulnerabilities"
+      ]
+    },
+    {
+      "id": "saltstack",
+      "name": "SaltStack minions",
+      "publisher": "emilyastranova",
+      "description": "Run Castor's jobs on Salt minions through the Salt master's REST API (salt-api): each minion you add is an agent, tagged from its grains.",
+      "repo": "emilyastranova/castor-plugins",
+      "path": "plugins/saltstack",
+      "tag_prefix": "saltstack-v",
+      "tags": [
+        "agents",
+        "saltstack",
+        "automation"
       ]
     },
     {
