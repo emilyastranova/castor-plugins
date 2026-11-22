@@ -27,6 +27,20 @@
       ]
     },
     {
+      "id": "awx",
+      "name": "AWX and Ansible Automation Platform",
+      "publisher": "emilyastranova",
+      "description": "Launch AWX / Ansible Automation Platform job templates from cards and playbooks: their output in the card, per-task and per-host results, check runs approved before the real one, retrying only the failed hosts, and inventories' hosts as SSH hosts.",
+      "repo": "emilyastranova/castor-plugins",
+      "path": "plugins/awx",
+      "tag_prefix": "awx-v",
+      "tags": [
+        "ansible",
+        "awx",
+        "automation"
+      ]
+    },
+    {
       "id": "bloodhound",
       "name": "BloodHound bridge",
       "publisher": "emilyastranova",

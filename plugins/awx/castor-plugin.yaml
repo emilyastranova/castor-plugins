@@ -1,0 +1,90 @@
+# AWX and Ansible Automation Platform: job templates as Castor library actions (cards and playbook
+# steps), their output in the card's console, per-task and per-host results; inventories' hosts for
+# Castor to add as SSH hosts.
+id: awx
+name: AWX and Ansible Automation Platform
+version: 1.0.0
+castor: ">=1.16.1"
+publisher: emilyastranova
+description: "Launch AWX / Ansible Automation Platform job templates from cards and playbooks: their output in the card, per-task and per-host results, check runs approved before the real one, retrying only the failed hosts, and inventories' hosts as Castor's SSH hosts."
+homepage: https://github.com/emilyastranova/castor-plugins/tree/main/plugins/awx
+license: MIT
+main: main.ts
+icon: icon.svg
+runtime: sandboxed
+# Nothing in Castor: what it brings back is the job's output, read by the actions' parsers.
+permissions: []
+# Its only network: the AWX URL set below.
+network: []
+library_actions:
+  - id: launch
+    name: AWX job template
+    description: Launch a job template on AWX or Ansible Automation Platform; its output, per-task and per-host results come back to the card.
+    tags: [ansible, awx, configuration]
+    args:
+      - name: template
+        required: true
+        description: The job template's name or id
+        example: Deploy web
+      - name: inventory
+        description: An inventory (name or id) instead of the template's (needs Prompt on launch)
+      - name: limit
+        description: Narrow it to some hosts or groups (needs Prompt on launch)
+      - name: extra_vars
+        type: text
+        description: Extra variables, as YAML or JSON (needs Prompt on launch)
+      - name: job_tags
+        description: Only tasks with these tags (needs Prompt on launch)
+      - name: skip_tags
+        description: Not tasks with these tags (needs Prompt on launch)
+      - name: check
+        type: boolean
+        description: A check run (job type Check; needs Prompt on launch for the job type)
+      - name: diff
+        type: boolean
+        description: Show what changes in files and templates (needs Prompt on launch)
+    outputs:
+      - {name: results, parser: json-records, options: {records: results}}
+      - {name: hosts, parser: json-records, options: {records: hosts}}
+    timeout_minutes: 240
+    # A check run first, when the card asks: what it would change, approved before the real run.
+    preview:
+      label: Check run
+      args: {check: true, diff: true}
+      default: false
+    # Retry what failed: the failed and unreachable hosts as the limit.
+    retry_failed:
+      output: results
+      field: host
+      where: {status: [failed, unreachable]}
+      arg: limit
+  - id: inventory
+    name: AWX inventory
+    description: The hosts of an AWX inventory, with how to reach each and its groups; the run's Output offers to add them as SSH hosts.
+    tags: [ansible, awx, inventory]
+    args:
+      - name: inventory
+        required: true
+        description: The inventory's name or id
+    # Named inventory: Castor offers to add a run's hosts as SSH hosts from an output by that name.
+    outputs:
+      - {name: inventory, parser: json-records}
+    timeout_minutes: 5
+settings:
+  - name: url
+    label: AWX URL
+    description: "Where AWX (or Automation Platform) answers, e.g. https://awx.example.com (Castor adds /api/v2; for AAP 2.5's gateway give https://aap.example.com/api/controller/v2). The plugin may reach this host and no other. It needs a certificate this server trusts."
+    type: text
+    required: true
+    network: true
+    per_user: never
+  - name: token
+    label: Token
+    description: An OAuth2 token (Users → Tokens in AWX) whose user may launch the job templates and read their jobs and inventories. Stored in Castor's vault. One for everyone, or each person's own so AWX shows who launched what.
+    type: secret
+    required: true
+  - name: poll_seconds
+    label: Check for news every (seconds)
+    type: number
+    default: 2
+    per_user: never

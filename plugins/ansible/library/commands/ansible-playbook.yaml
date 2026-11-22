@@ -110,3 +110,16 @@ outputs:
   - name: hosts
     parser: ansible-hosts
     source: /work/artifacts/ansible-results.json
+# A check run first, when the card asks (its "Check run first" switch): what would change, with
+# diffs, for a person to look at before approving the real run.
+preview:
+  label: Check run
+  args: {check: true, diff: true}
+  default: false
+# "Retry what failed" on a card, and retry_failed on a playbook step: only the hosts that failed or
+# couldn't be reached, as the limit.
+retry_failed:
+  output: results
+  field: host
+  where: {status: [failed, unreachable]}
+  arg: limit

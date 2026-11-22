@@ -1,0 +1,56 @@
+# An inventory's hosts, from a Git repository: a static one, or a dynamic one its inventory plugins
+# work out (aws_ec2, azure_rm, netbox… with the collections its requirements.yml installs). The run's
+# Output offers to add the hosts as Castor's SSH hosts, to run cards on (admins).
+id: ansible-inventory
+name: Ansible inventory
+description: List the hosts of an inventory in a Git repository (static or dynamic), to add them as SSH hosts
+tags: [ansible, inventory]
+tool: ansible
+args:
+  - name: repository
+    required: true
+    description: The repository (https://… or git@…)
+    example: https://github.com/example/infra.git
+  - name: ref
+    flag: --branch
+    description: A branch or tag; empty is the repository's default branch
+  - name: inventory_path
+    required: true
+    default: inventory
+    description: The inventory's path in the repository (a file, a directory, or a dynamic inventory's config)
+vars:
+  - name: ssh
+    kind: ssh-key
+    required: false
+    description: Clones git@ repositories with this key
+  - name: vault
+    kind: ansible-vault
+    required: false
+    description: Opens vaulted inventory variables
+  - name: git
+    kind: api-token
+    required: false
+    description: A token for a private HTTPS repository
+command: |
+  set -eu
+  mkdir -p {{ work }}/artifacts
+  export PYTHONDONTWRITEBYTECODE=1
+  gitauth=
+  if [ -n "${CASTOR_VAR_GIT_TOKEN:-}" ]; then
+    gitauth="http.extraHeader=Authorization: Basic $(printf 'x-access-token:%s' "$CASTOR_VAR_GIT_TOKEN" | base64 | tr -d '\n')"
+  fi
+  if [ -n "${CASTOR_VAR_SSH_PRIVATE_KEY:-}" ]; then
+    export GIT_SSH_COMMAND="ssh -i $CASTOR_VAR_SSH_PRIVATE_KEY -o StrictHostKeyChecking=accept-new"
+  fi
+  git ${gitauth:+-c "$gitauth"} clone --quiet --depth 1 {{ ref }} {{ repository }} {{ work }}/repo
+  cd {{ work }}/repo
+  for req in requirements.yml collections/requirements.yml; do
+    if [ -f "$req" ]; then ansible-galaxy collection install -r "$req"; fi
+  done
+  ansible-inventory -i {{ inventory_path }} --list --output {{ work }}/artifacts/inventory.json ${CASTOR_VAR_VAULT_PASSWORD_FILE:+--vault-password-file "$CASTOR_VAR_VAULT_PASSWORD_FILE"}
+  ansible-inventory -i {{ inventory_path }} --graph ${CASTOR_VAR_VAULT_PASSWORD_FILE:+--vault-password-file "$CASTOR_VAR_VAULT_PASSWORD_FILE"}
+outputs:
+  # Named inventory: Castor offers to add a run's hosts as SSH hosts from an output by that name.
+  - name: inventory
+    parser: ansible-inventory
+    source: /work/artifacts/inventory.json

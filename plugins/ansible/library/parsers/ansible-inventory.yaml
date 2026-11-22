@@ -1,0 +1,45 @@
+# What `ansible-inventory --list` prints, as one row per host: how to reach it and its groups
+# ({name, host, port, user, groups, skip}), the rows Castor adds as SSH hosts (Agents → From an
+# inventory, or the run's Output). Host variables are already merged from their groups by Ansible.
+id: ansible-inventory
+name: Ansible inventory
+description: The hosts of ansible-inventory --list, with how to reach each and its groups
+type: list<object>
+format: javascript
+code: |
+  const SSH = ["ssh", "smart", "paramiko", "ansible.builtin.ssh", "ansible.builtin.paramiko_ssh"];
+  function parse(text) {
+    const data = JSON.parse(text);
+    const hostvars = (data._meta && data._meta.hostvars) || {};
+    const parents = {};
+    const member = {};
+    const names = Object.keys(hostvars);
+    for (const [group, body] of Object.entries(data)) {
+      if (group === "_meta" || !body || typeof body !== "object") continue;
+      for (const child of body.children || []) (parents[child] = parents[child] || []).push(group);
+      for (const host of body.hosts || []) {
+        (member[host] = member[host] || []).push(group);
+        if (!names.includes(host)) names.push(host);
+      }
+    }
+    const lineage = (group, seen) => {
+      const out = [group];
+      for (const p of parents[group] || []) if (!seen.includes(p)) out.push(...lineage(p, [...seen, group]));
+      return out;
+    };
+    return names.map((name) => {
+      const v = hostvars[name] || {};
+      const groups = [...new Set((member[name] || []).flatMap((g) => lineage(g, [])))]
+        .filter((g) => g !== "all" && g !== "ungrouped").sort();
+      const connection = String(v.ansible_connection || "ssh");
+      const port = v.ansible_port ?? v.ansible_ssh_port;
+      return {
+        name,
+        host: String(v.ansible_host || v.ansible_ssh_host || name),
+        port: port === undefined || port === null || port === "" ? null : Number(port),
+        user: String(v.ansible_user || v.ansible_ssh_user || ""),
+        groups,
+        skip: SSH.includes(connection) ? null : `it connects with ${connection}, not SSH`,
+      };
+    });
+  }

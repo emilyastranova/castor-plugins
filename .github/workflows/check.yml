@@ -37,7 +37,7 @@ jobs:
       - name: The official plugins installed and run in a real Castor
         env:
           CASTOR_PLUGINS_REPO: ${{ github.workspace }}
-        run: python -m pytest .castor/server/tests/test_plugins.py .castor/server/tests/test_plugin_directory.py -q
+        run: python -m pytest .castor/server/tests/test_plugins.py .castor/server/tests/test_plugin_directory.py .castor/server/tests/test_plugin_hooks.py .castor/server/tests/test_awx_plugin.py -q
 
   releases:
     name: Releases of plugins elsewhere
