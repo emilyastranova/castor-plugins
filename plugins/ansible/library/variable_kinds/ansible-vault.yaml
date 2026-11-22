@@ -1,0 +1,9 @@
+id: ansible-vault
+name: Ansible Vault password
+description: The password that opens a playbook's vaulted files and variables (--vault-password-file).
+fields:
+  - name: password_file
+    label: Password file
+    type: secret_file
+    required: true
+    description: A file holding the vault password, as you'd pass to --vault-password-file

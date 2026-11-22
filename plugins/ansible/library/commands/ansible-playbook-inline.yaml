@@ -1,0 +1,91 @@
+# A playbook written on the card or in the Library (for one-offs), run against an inventory built
+# from the project's assets as the job is sent. Results and facts as for ansible-playbook.
+id: ansible-playbook-inline
+name: Ansible playbook (written here)
+description: Run a playbook you write here against the project's hosts
+tags: [ansible, configuration]
+tool: ansible
+args:
+  - name: playbook
+    type: text
+    required: true
+    description: The playbook (YAML)
+    example: |
+      - hosts: all
+        gather_facts: true
+        tasks:
+          - name: Uptime
+            ansible.builtin.command: uptime
+            changed_when: false
+  - name: targets
+    type: list
+    description: Hosts to run on (addresses or names); empty is the project's hosts, by the filter and scope below
+  - name: asset_filter
+    description: Which of the project's hosts, as on the Assets page (os:ubuntu, roles:web)
+  - name: scope
+    description: Only hosts in this scope group (* for any group)
+  - name: limit
+    flag: --limit
+  - name: tags
+    flag: --tags
+  - name: skip_tags
+    flag: --skip-tags
+  - name: extra_vars
+    type: text
+    description: Extra variables, as YAML or JSON
+  - name: check
+    type: boolean
+    flag: --check
+    description: Check mode, to see what would change without changing it
+  - name: diff
+    type: boolean
+    flag: --diff
+  - name: strict_host_keys
+    type: boolean
+    default: false
+    description: Refuse hosts whose SSH key isn't known yet (off, a new host's key is accepted)
+vars:
+  - name: ssh
+    kind: ssh-key
+    required: false
+    description: The key (and user) it connects to hosts with
+  - name: become
+    kind: credential
+    required: false
+    description: The password for become (sudo); only its password is used
+  - name: vault
+    kind: ansible-vault
+    required: false
+inputs:
+  - name: playbook
+    filename: playbook.yml
+    content: "{{ playbook }}"
+  - name: inventory
+    filename: inventory.yml
+    description: The project's hosts, with what Castor knows of them as host variables (made as the job is sent)
+  - name: callback
+    filename: castor_results.py
+  - name: extra
+    filename: extra-vars.yml
+    content: "{{ extra_vars }}"
+command: |
+  set -eu
+  mkdir -p {{ work }}/artifacts {{ work }}/.castor
+  export CASTOR_RESULTS={{ work }}/artifacts/ansible-results.json
+  export ANSIBLE_CALLBACK_PLUGINS="$(dirname {{ input.callback }})" ANSIBLE_CALLBACKS_ENABLED=castor_results
+  export ANSIBLE_HOST_KEY_CHECKING={{ strict_host_keys }} ANSIBLE_RETRY_FILES_ENABLED=False ANSIBLE_FORCE_COLOR=1 PYTHONDONTWRITEBYTECODE=1
+  cd {{ work }}
+  become=
+  if [ -n "${CASTOR_VAR_BECOME_PASSWORD:-}" ]; then
+    become={{ work }}/.castor/become-password
+    printf '%s' "$CASTOR_VAR_BECOME_PASSWORD" > "$become"
+    chmod 600 "$become"
+  fi
+  ansible-playbook -i {{ input.inventory }} {{ input.playbook }} {{ limit }} {{ tags }} {{ skip_tags }} {{ check }} {{ diff }} -e @{{ input.extra }} ${CASTOR_VAR_SSH_USERNAME:+-u "$CASTOR_VAR_SSH_USERNAME"} ${CASTOR_VAR_SSH_PRIVATE_KEY:+--private-key "$CASTOR_VAR_SSH_PRIVATE_KEY"} ${CASTOR_VAR_VAULT_PASSWORD_FILE:+--vault-password-file "$CASTOR_VAR_VAULT_PASSWORD_FILE"} ${become:+--become-password-file "$become"}
+outputs:
+  - name: results
+    parser: ansible-results
+    source: /work/artifacts/ansible-results.json
+  - name: hosts
+    parser: ansible-hosts
+    source: /work/artifacts/ansible-results.json

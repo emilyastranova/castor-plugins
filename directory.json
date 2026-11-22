@@ -13,6 +13,20 @@
   ],
   "plugins": [
     {
+      "id": "ansible",
+      "name": "Ansible playbooks",
+      "publisher": "emilyastranova",
+      "description": "Run Ansible playbooks from a Git repository or written in the Library on your agents: inventory from the project's assets, credentials from the vault, per-host, per-task results on the card and facts as the project's hosts.",
+      "repo": "emilyastranova/castor-plugins",
+      "path": "plugins/ansible",
+      "tag_prefix": "ansible-v",
+      "tags": [
+        "ansible",
+        "configuration",
+        "automation"
+      ]
+    },
+    {
       "id": "bloodhound",
       "name": "BloodHound bridge",
       "publisher": "emilyastranova",

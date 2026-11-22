@@ -1,0 +1,24 @@
+# Each host of an Ansible run: how it went (the run's recap) and the facts it reported, as host
+# fields. The plugin's assets.map hook makes the reachable ones the project's hosts.
+id: ansible-hosts
+name: Ansible hosts
+description: Each host of an Ansible run, with its recap and the facts it gathered (address, name, OS)
+type: list<object>
+format: javascript
+code: |
+  function parse(text) {
+    const data = JSON.parse(text);
+    return Object.keys(data.hosts || {}).sort().map((host) => {
+      const s = data.hosts[host];
+      const f = s.facts || {};
+      const v4 = f.default_ipv4 || {};
+      const os = [f.distribution, f.distribution_version].filter(Boolean).join(" ");
+      return {
+        host,
+        status: s.unreachable ? "unreachable" : s.failed ? "failed" : s.changed ? "changed" : "ok",
+        ok: s.ok, changed: s.changed, failed: s.failed, unreachable: s.unreachable, skipped: s.skipped,
+        ip: v4.address || null, hostname: f.fqdn || f.hostname || null, os: os || null, domain: f.domain || null,
+        mac: v4.macaddress || null, gateway: v4.gateway || null, dns_servers: (f.dns && f.dns.nameservers) || [],
+      };
+    });
+  }

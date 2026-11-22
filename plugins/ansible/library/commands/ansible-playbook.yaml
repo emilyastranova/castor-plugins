@@ -1,0 +1,112 @@
+# A playbook from a Git repository: cloned into the job, its requirements.yml installed (roles and
+# collections), run against an inventory built from the project's assets as the job is sent (or one
+# from the repository). What each task did on each host is read into results; facts become hosts.
+id: ansible-playbook
+name: Ansible playbook from Git
+description: Run a playbook from a Git repository against the project's hosts (or the repository's own inventory)
+tags: [ansible, configuration]
+tool: ansible
+args:
+  - name: repository
+    required: true
+    description: The repository (https://… or git@…)
+    example: https://github.com/example/infra.git
+  - name: ref
+    flag: --branch
+    description: A branch or tag; empty is the repository's default branch
+  - name: playbook
+    required: true
+    default: site.yml
+    description: The playbook's path in the repository
+  - name: inventory_path
+    description: An inventory in the repository to use instead of one built from the project's assets
+  - name: targets
+    type: list
+    description: Hosts to run on (addresses or names); empty is the project's hosts, by the filter and scope below
+  - name: asset_filter
+    description: Which of the project's hosts, as on the Assets page (os:ubuntu, roles:web)
+  - name: scope
+    description: Only hosts in this scope group (* for any group)
+  - name: limit
+    flag: --limit
+    description: Narrow the run to some hosts or groups of the inventory
+  - name: tags
+    flag: --tags
+  - name: skip_tags
+    flag: --skip-tags
+  - name: extra_vars
+    type: text
+    description: Extra variables, as YAML or JSON
+  - name: check
+    type: boolean
+    flag: --check
+    description: Check mode, to see what would change without changing it
+  - name: diff
+    type: boolean
+    flag: --diff
+    description: Show what changes in files and templates
+  - name: strict_host_keys
+    type: boolean
+    default: false
+    description: Refuse hosts whose SSH key isn't known yet (off, a new host's key is accepted)
+vars:
+  - name: ssh
+    kind: ssh-key
+    required: false
+    description: The key (and user) it connects to hosts with, and clones git@ repositories with
+  - name: become
+    kind: credential
+    required: false
+    description: The password for become (sudo); only its password is used
+  - name: vault
+    kind: ansible-vault
+    required: false
+    description: Opens the repository's vaulted files and variables
+  - name: git
+    kind: api-token
+    required: false
+    description: A token for a private HTTPS repository
+inputs:
+  - name: inventory
+    filename: inventory.yml
+    description: The project's hosts, with what Castor knows of them as host variables (made as the job is sent)
+  - name: callback
+    filename: castor_results.py
+    description: Writes what each task did on each host for Castor (from the plugin)
+  - name: extra
+    filename: extra-vars.yml
+    content: "{{ extra_vars }}"
+command: |
+  set -eu
+  mkdir -p {{ work }}/artifacts {{ work }}/.castor
+  export CASTOR_RESULTS={{ work }}/artifacts/ansible-results.json
+  export ANSIBLE_CALLBACK_PLUGINS="$(dirname {{ input.callback }})" ANSIBLE_CALLBACKS_ENABLED=castor_results
+  export ANSIBLE_HOST_KEY_CHECKING={{ strict_host_keys }} ANSIBLE_RETRY_FILES_ENABLED=False ANSIBLE_FORCE_COLOR=1 PYTHONDONTWRITEBYTECODE=1
+  gitauth=
+  if [ -n "${CASTOR_VAR_GIT_TOKEN:-}" ]; then
+    gitauth="http.extraHeader=Authorization: Basic $(printf 'x-access-token:%s' "$CASTOR_VAR_GIT_TOKEN" | base64 | tr -d '\n')"
+  fi
+  if [ -n "${CASTOR_VAR_SSH_PRIVATE_KEY:-}" ]; then
+    export GIT_SSH_COMMAND="ssh -i $CASTOR_VAR_SSH_PRIVATE_KEY -o StrictHostKeyChecking=accept-new"
+  fi
+  git ${gitauth:+-c "$gitauth"} clone --quiet --depth 1 {{ ref }} {{ repository }} {{ work }}/repo
+  cd {{ work }}/repo
+  for req in requirements.yml collections/requirements.yml roles/requirements.yml; do
+    if [ -f "$req" ]; then ansible-galaxy install -r "$req"; fi
+  done
+  become=
+  if [ -n "${CASTOR_VAR_BECOME_PASSWORD:-}" ]; then
+    become={{ work }}/.castor/become-password
+    printf '%s' "$CASTOR_VAR_BECOME_PASSWORD" > "$become"
+    chmod 600 "$become"
+  fi
+  inventory={{ inventory_path }}
+  [ -n "$inventory" ] || inventory={{ input.inventory }}
+  ansible-playbook -i "$inventory" {{ playbook }} {{ limit }} {{ tags }} {{ skip_tags }} {{ check }} {{ diff }} -e @{{ input.extra }} ${CASTOR_VAR_SSH_USERNAME:+-u "$CASTOR_VAR_SSH_USERNAME"} ${CASTOR_VAR_SSH_PRIVATE_KEY:+--private-key "$CASTOR_VAR_SSH_PRIVATE_KEY"} ${CASTOR_VAR_VAULT_PASSWORD_FILE:+--vault-password-file "$CASTOR_VAR_VAULT_PASSWORD_FILE"} ${become:+--become-password-file "$become"}
+outputs:
+  - name: results
+    parser: ansible-results
+    source: /work/artifacts/ansible-results.json
+  - name: hosts
+    parser: ansible-hosts
+    source: /work/artifacts/ansible-results.json

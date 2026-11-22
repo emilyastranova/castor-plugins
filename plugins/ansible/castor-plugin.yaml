@@ -1,0 +1,26 @@
+# Ansible playbooks from Castor: run them on an agent like any command, with an inventory built
+# from the project's assets, credentials from the vault, and what each task did on each host as
+# results on the card (and facts gathered as the project's hosts).
+id: ansible
+name: Ansible playbooks
+version: 1.0.0
+castor: ">=1.16"
+publisher: emilyastranova
+description: "Run Ansible playbooks from a Git repository or written in the Library, on your agents: inventory from the project's assets, SSH keys and vault passwords from Castor's vault, per-host, per-task results on the card and facts as the project's hosts."
+homepage: https://github.com/emilyastranova/castor-plugins/tree/main/plugins/ansible
+license: MIT
+main: main.ts
+icon: icon.svg
+runtime: sandboxed
+# It reads the project's hosts and services to build the inventory. It changes nothing in Castor
+# itself: what its parsers read becomes assets through Castor (the assets.map hook).
+permissions: [assets:read]
+network: []
+contents: [tools, commands, parsers, variable_kinds]
+hooks:
+  # Just before one of its commands is sent: the inventory, the results callback, the extra vars.
+  - kind: job.prepare
+    timeout_seconds: 20
+  # After a run: the facts each host reported, as the project's hosts.
+  - kind: assets.map
+    parsers: [ansible-hosts]
